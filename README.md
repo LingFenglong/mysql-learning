@@ -1,10 +1,2 @@
- unknown switch `b'
-# Hello
+# mysql-learning
 
-- feature-A
-
-- featurn-A 2
-
-- fix-B
-
-- feature-C

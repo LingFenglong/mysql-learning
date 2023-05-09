@@ -1,0 +1,19 @@
+{
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default"
+            },
+            "previewLimit": 50,
+            "server": "192.168.144.131",
+            "port": 3306,
+            "driver": "MySQL",
+            "name": "northwind",
+            "database": "northwind",
+            "username": "root",
+            "password": "147258369",
+            "connectionTimeout": 5
+        }
+    ],
+    "sql-formatter.dialect": "mysql"
+}
