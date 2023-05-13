@@ -326,19 +326,6 @@ where department_id = (
     )
 group by department_id;
 
-
-select distinct a.first_name, a.department_id, a.email, a.salary
-from northwind.employees as a
-join northwind.employees as b
-on a.employee_id = b.manager_id
-where a.department_id = (
-  select department_id
-  from northwind.employees
-  group by department_id
-  order by avg(salary) desc
-  limit 1
-);
-
 -- 查询平均月薪最高的部门的管理者的名字、部门编号、邮箱和月薪
 select first_name,
     department_id,
