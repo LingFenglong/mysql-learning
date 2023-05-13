@@ -4,6 +4,7 @@
 create database if not exists cs;
 
 use cs;
+SELECT DATABASE();
 
 -- 创建 employees 表，拥有 northwind.employees 表的所有数据
 create table if not exists cs.employees as
@@ -319,6 +320,12 @@ end$
 
 DELIMITER ;
 
+show create procedure pyramid;
+-- show procedure status where db = 'cs';
+show procedure status where `name` = 'pyramid';
+select * from information_schema.routines
+where routine_name = 'pyramid';
+
 call pyramid(10);
 
 -- 创建存储过程 mult_talbe，输出九九乘法表
@@ -346,25 +353,66 @@ END$
 DELIMITER;
 
 
--- 声明存储过程 raise_salary6，给全体员工涨薪，每次涨幅为 10%，直到全公司的平均薪资达到 12000 为止，返回上涨次数。
+-- 声明存储过程 raise_salary6，给全体员工涨薪，每次涨幅为 10%，直到全公司的平均薪资达到 12000 为止,
+-- 返回上涨次数。
 -- 确认该存储过程创建成功
 -- 调用该存储过程，确认该存储过程执行是否成功
 
+drop procedure raise_salary6;
+delimiter $
+create procedure raise_salary6(out cnt int)
+begin
+    declare c int default 0;
+    while (select min(salary) from cs.employees) < 12000 do
+        update cs.employees set salary = salary * 1.1;
+        set c = c + 1;
+    end while;
+    set cnt = c;
+end $
+delimiter ;
+
+set @cnt = 0;
+select @cnt;
+call raise_salary6(@cnt);
+
 -- 创建存储函数 get_count，计算薪资最高员工的工资之和达到 total_salary 的人数
 -- 调用该存储函数，确认该存储函数执行是否成功
+set GLOBAL log_bin_trust_function_creators = on;
+
+drop FUNCTION get_count;
+
 DELIMITER $
 create FUNCTION get_count(total_salary double(8, 2))
-return INT
+returns INT
 begin
     DECLARE ss DOUBLE(8, 2) DEFAULT 0.0;    -- sum_salary
-    DECLARE c int DEFAULT 1;    -- count
+    DECLARE c int DEFAULT 0;    -- count
     lp: loop
-        
-        if ss >= total_salary
+        set c = c + 1;
+        SELECT SUM(salary) into ss 
+        FROM (
+                SELECT salary
+                FROM cs.employees
+                order by salary desc
+                LIMIT 0, c
+            ) as sal;
+        if ss >= total_salary then
             leave lp;
+        end if;
     end loop lp;
-
-end$
+    return (SELECT c);
+end $
 DELIMITER ;
+
+SELECT get_count(57000);
+
+select employee_id, first_name, salary
+from cs.employees
+order by salary desc
+limit 0, 10;
+
+use cs;
+SELECT DATABASE();
+
 -- 将上面的 SQL 代码放到 02-sql 目录下的 15-compound-statemnet.sql 文件中
 -- 提交代码仓库，推送到 bitbucket 远程代码仓库

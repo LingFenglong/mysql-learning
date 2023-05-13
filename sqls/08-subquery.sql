@@ -167,21 +167,194 @@ where salary > (select avg(salary) from employees)
 order by salary desc;
 
 -- 查询各部门中工资比本部门平均工资高的员工的员工编号、名字和工资
+select employee_id,
+    first_name,
+    salary,
+    department_id
+from northwind.employees as e1
+where salary > (
+        select AVG(salary)
+        from northwind.employees as e2
+        where e1.department_id = e2.department_id
+    );
+select AVG(salary)
+from northwind.employees
+where department_id = 50;    -- 3475
 
 -- 查询和名字中包含字母 u 的员工在相同部门的员工的员工编号和名字
+select employee_id,
+    first_name
+from northwind.employees
+where department_id in (
+        select department_id
+        from northwind.employees
+        where first_name like '%u%'
+    );
+
 -- 查询在部门 location_id 为 1700 的部门工作的员工的员工编号
+select employee_id, department_id
+from northwind.employees
+where department_id in (
+        select department_id
+        from northwind.departments
+        where location_id = 1700
+    );
+select department_id
+from northwind.departments
+where location_id = 1700;
+/*
+10  30  90  100  110  120  130
+*/
+
 -- 查询员工名字和工资，这些员工的上司的名字是 Steven
+select first_name,
+    salary
+from northwind.employees
+where manager_id in (
+        select employee_id
+        from northwind.employees
+        where first_name = 'Steven'
+    );
+
+select employee_id
+from northwind.employees
+where first_name = 'Steven';
+
+select *
+from northwind.employees
+where employee_id = 100;
+
+select *
+from northwind.employees
+where employee_id = 128;
+
 -- 查询工资最高的员工的姓名 name，name = first_name, last_name
+select concat(first_name, ' ', last_name)
+from (
+        select *
+        from northwind.employees
+        order by salary desc
+        limit 0, 1
+    ) as emp;
+
 -- 查询工资最低的员工的名字和工资
+select first_name,
+    salary
+from (
+        select *
+        from northwind.employees
+        order by Salary asc
+        limit 0, 1
+    ) as emp;
+
 -- 查询平均工资最低的部门信息
+select *
+from northwind.departments
+where department_id = (
+        select department_id
+        from northwind.employees
+        group by department_id
+        order by avg(salary) asc
+        limit 0, 1
+    );
+
+select department_id, avg(salary)
+from northwind.employees
+group by department_id
+order by avg(salary) asc;
+
 -- 查询平均工资最低的部门信息和该部门的平均工资
+select d.*,
+    avg_salary
+from northwind.departments d
+    join (
+        select avg(salary) as avg_salary,
+            department_id
+        from northwind.employees
+        group by department_id
+        order by avg(salary)
+        limit 0, 1
+    ) as ag_dep on d.department_id = ag_dep.department_id;
+
+select d.*, ag_sal.avg_salary
+from northwind.departments as d
+    join (
+        select avg(salary) as avg_salary,
+            department_id
+        from northwind.employees
+        group by department_id
+        order by avg(salary)
+        limit 0, 1
+    ) as ag_sal on d.department_id = ag_sal.department_id;
+
 -- 查询平均工资最高的 job 信息
-select avg(salary)
-group by job_id
+SELECT * FROM northwind.jobs
+WHERE job_id = (
+    SELECT job_id FROM northwind.employees
+    GROUP BY job_id
+    ORDER BY avg(salary) desc
+    LIMIT 0, 1
+);
 
 -- 查询平均工资高于公司平均工资的部门有哪些
+select department_id,
+    avg(salary) as avg_salary
+from northwind.employees
+group by department_id
+having avg_salary > (
+        select avg(salary)
+        from northwind.employees
+    );
+
 -- 查询所有管理者的详细信息
+select *
+from northwind.employees
+where employee_id in (
+        select manager_id
+        from northwind.employees
+    );
+
 -- 查询各个部门中最高工资中最低的那个部门的最低工资是多少
+select min(salary)
+from northwind.employees
+where department_id = (
+        select department_id
+        from northwind.employees
+        group by department_id
+        order by max(salary) asc
+        limit 0, 1
+    )
+group by department_id;
+
+
+select distinct a.first_name, a.department_id, a.email, a.salary
+from northwind.employees as a
+join northwind.employees as b
+on a.employee_id = b.manager_id
+where a.department_id = (
+  select department_id
+  from northwind.employees
+  group by department_id
+  order by avg(salary) desc
+  limit 1
+);
+
 -- 查询平均月薪最高的部门的管理者的名字、部门编号、邮箱和月薪
+select first_name,
+    department_id,
+    email,
+    salary
+from northwind.employees
+where employee_id in (
+        select manager_id
+        from northwind.employees
+    )
+    and department_id = (
+        select department_id
+        from northwind.employees
+        group by department_id
+        order by avg(salary) desc
+        limit 0, 1
+    );
 -- 将上面的 SQL 代码放到 02-sql 目录下的 08-subquery.sql 文件中
 -- 提交代码仓库，推送到 bitbucket 远程代码仓库
