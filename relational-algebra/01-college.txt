@@ -1,0 +1,43 @@
+2. 关系代数
+要求：
+
+在 dbms-demo 目录下，创建 03-relational-algebra 文件夹
+下面的所有关系代数表达式查询，都在 relax 软件的 college 数据库上完成
+
+查找计算机系的学生【选择】
+σSdept='CS'(Student)
+
+查找计算机系的男生【选择】
+σSdept='CS'(Student)
+
+查找学生信息，列出学号和姓名【投影】
+σSdept='CS'(Student)
+
+查找所有系部【投影】
+πSdept(Student)
+
+查找计算机系和数学系的学生【并】
+σSdept='CS' ∨ Sdept='Math'(Student)
+σSdept='CS'(Student) ∪ σSdept='Math'(Student)
+
+查找选了 1002 号课程，但没选 3006 号课程的学生编号【差】
+πSno(σCno='1002'(SC)) - πSno(σCno='3006'(SC))
+
+查找已选课的学生和成绩信息【积】
+πStudent.Sno, Student.Sname, SC.Cno, SC.Grade(σSC.Cno ≠ null ∧ Student.Sno = SC.Sno (Student ⨯ SC))
+
+查找与 Elsa 同系的学生学号和姓名【积】
+
+
+查找 3006 号课程的最高分【积】
+查找计算机系学生的 Sno 和 Ssex，重命名为 ID 和 Gender【重命名】
+将 SC 的 Grade 属性名修改为 Score【重命名】
+查找既选了 1002 号课程，又选了 3006 号课程的学生编号【交】
+查找计算机系学生的选课情况，列出学号、姓名、课号和分数【连接】
+查找没选课的学生编号和姓名【左外连接】
+查找选修了所有课程的学生编号【除】
+统计每个系的男生人数和女生人数【分组】
+统计每位已选课学生的选课数和平均分【分组】
+
+将上面的代码放到 03-relational-algebra 目录下的 01-college.txt 文件中
+提交代码仓库，推送到 bitbucket 远程代码仓库
