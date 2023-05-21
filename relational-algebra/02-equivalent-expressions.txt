@@ -1,24 +1,83 @@
-3. 等价表达式
-要求：
-
-下面的所有关系代数表达式查询，都在 relax 软件的 college 数据库上完成
-下面的每个题目要求利用运算规律至少写出两个等价的关系代数表达式
-.
-查找数学专业的女生【选择之交换律】
-查找计算机系 19 岁男生【选择之合并律】
-查找全体学生的学号和姓名【投影之归一律】
-查找物理系、计算机系以及数学系的学生【并之结合律】
-查找计算机系和物理系的所有女生【并之分配律】
-查找计算机系 19 岁男生【交之结合律】
-查找计算机系 19 岁男生【交之分配律】
-查找学号为 PH-001，但没选 1002 课程，成绩为 88 分的学生【差之分配律】
-查询学生和成绩信息【连接之交换律】
-查询学生、课程和成绩信息【连接之结合律】
-查找学号为 PH-001 的学生和成绩信息【连接和选择之分配律】
-查询学号为 PH-001 且成绩为 88 分的学生和成绩信息【连接和选择之分配律】
-查询学生和成绩信息，包括：学号、系部、课号和成绩【连接和投影之分配律】
-.
-查找计算机系 19 岁男生【整理上面所有的表达式】
-.
-将上面的代码放到 03-relational-algebra 目录下的 02-equivalent-expressions.txt 文件中
-提交代码仓库，推送到 bitbucket 远程代码仓库
+-- 3. 等价表达式
+-- 要求：
+-- 
+-- 下面的所有关系代数表达式查询，都在 relax 软件的 college 数据库上完成
+-- 下面的每个题目要求利用运算规律至少写出两个等价的关系代数表达式
+-- 
+-- 查找数学专业的女生【选择之交换律】
+-- σSsex='F'(σSdept='Math'(Student))
+-- σSdept='Math'(σSsex='F'(Student))
+-- σSdept='Math'∧Ssex='F'(Student)
+-- 
+-- 查找计算机系 19 岁男生【选择之合并律】
+-- 查找计算机系 19 岁男生【选择运算之合并律】
+-- σSsex='M'(σSage=19(σSdept='CS'(Student)))
+-- σSsex='M'∧Sage=19∧Sdept='CS'(Student)
+-- 
+-- 查找全体学生的学号和姓名【投影之归一律】
+-- πSno,Sname(πSno,Sname,Sage(Student))
+-- πSno,Sname(Student)
+-- 
+-- 查找物理系、计算机系以及数学系的学生【并之结合律】
+-- (σSdept='Physics'(Student) ∪ σSdept='CS'(Student)) ∪ σSdept='Math'(Student)
+-- σSdept='Physics'(Student) ∪ (σSdept='CS'(Student) ∪ σSdept='Math'(Student))
+-- σSdept='Physics'∨Sdept='CS'∨Sdept='Math'(Student)
+-- 
+-- 查找计算机系和物理系的所有女生【并之分配律】
+-- σSsex='F'(σSdept='CS'(Student) ∪ σSdept='Math'(Student))
+-- σSsex='F'(σSdept='CS'(Student)) ∪ σSsex='F'(σSdept='Math'(Student))
+-- σSsex='F'∧(Sdept='CS'∨Sdept='Math')(Student)
+-- 
+-- 查找计算机系 19 岁男生【交之结合律】
+-- (σSsex='M'(Student) ∩ σSdept='CS'(Student)) ∩ σSage=19(Student)
+-- σSsex='M'(Student) ∩ (σSdept='CS'(Student) ∩ σSage=19(Student))
+-- 
+-- 查找计算机系 19 岁男生【交之分配律】
+-- 1)
+-- σSsex='M'(σSdept='CS'(Student) ∩ σSage=19(Student))
+-- σSsex='M'(σSdept='CS'(Student)) ∩ σSsex='M'(σSage=19(Student))
+-- 
+-- 2)
+-- σSsex='M'(σSdept='CS'(Student) ∩ σSage=19(Student))
+-- σSsex='M'(σSdept='CS'(Student)) ∩ σSage=19(Student)
+-- 
+-- 查找学号为 PH-001，但没选 1002 课程，成绩为 88 分的学生【差之分配律】
+-- 1)
+-- σGrade=88(σSno='PH-001'(SC) - σCno='1002'(SC))
+-- σGrade=88(σSno='PH-001'(SC)) - σGrade=88(σCno='1002'(SC))
+-- 
+-- 2)
+-- σGrade=88(σSno='PH-001'(SC) - σCno='1002'(SC))
+-- σGrade=88(σSno='PH-001'(SC)) - σCno='1002'(SC)
+-- 
+-- 查询学生和成绩信息【连接之交换律】
+-- Student ⨝ SC
+-- SC ⨝ Student
+-- 
+-- 查询学生、课程和成绩信息【连接之结合律】
+-- (Student ⨝ SC) ⨝ Course
+-- Student ⨝ (SC ⨝ Course)
+-- 
+-- 查找学号为 PH-001 的学生和成绩信息【连接和选择之分配律】
+-- σStudent.Sno='PH-001'(Student ⨝ SC)
+-- σSno='PH-001'(Student) ⨝ SC
+-- 
+-- 查询学号为 PH-001 且成绩为 88 分的学生和成绩信息【连接和选择之分配律】
+-- σStudent.Sno='PH-001'∧SC.Grade=88 (Student ⨝ SC)
+-- σSno='PH-001'(Student) ⨝ σGrade=88(SC)
+-- 
+-- 查询学生和成绩信息，包括：学号、系部、课号和成绩【连接和投影之分配律】
+-- πSno,Sdept,Cno,Grade(Student ⨝ SC)
+-- πSno,Sdept(Student) ⨝ πCno,Grade,Sno(SC)
+-- 
+-- 查找计算机系 19 岁男生【整理上面所有的表达式】
+-- σSsex='M'∧Sage=19∧Sdept='CS'(Student)
+-- σSsex='M'(σSage=19(σSdept='CS'(Student)))
+-- (σSsex='M'(Student) ∩ σSdept='CS'(Student)) ∩ σSage=19(Student)
+-- σSsex='M'(Student) ∩ (σSdept='CS'(Student) ∩ σSage=19(Student))
+-- σSsex='M'(σSdept='CS'(Student) ∩ σSage=19(Student))
+-- σSsex='M'(σSdept='CS'(Student)) ∩ σSsex='M'(σSage=19(Student))
+-- σSsex='M'(σSdept='CS'(Student)) ∩ σSage=19(Student)
+-- 
+-- 将上面的代码放到 03-relational-algebra 目录下的 02-equivalent-expressions.txt 文件中
+-- 提交代码仓库，推送到 bitbucket 远程代码仓库-- 
