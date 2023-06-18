@@ -7,6 +7,10 @@ SET GLOBAL validate_password.policy=LOW;
 
 
 -- DCL 用户管理，权限管理
+-- 修改host
+update mysql.`user` set host = '192.168.%' where user = 'lingfenglong' and host = '%';
+flush privileges;
+
 -- 创建 MySQL 用户，用户名：自己姓名的拼音，密码：123456
 CREATE USER 'LingFenglong'@'localhost' IDENTIFIED BY '123456';
 
@@ -21,6 +25,9 @@ SELECT current_user();
 -- 修改用户 zhang3 为 li4，刷新权限
 create user 'zhang3'@'localhost' identified by '123456';
 rename user 'zhang3'@'localhost' to 'lisi'@'localhost';
+update mysql.`user` set user = 'li4' where user = 'zhang3';
+
+
 FLUSH PRIVILEGES;
 
 
@@ -315,13 +322,73 @@ group by job_title
 order by num desc;
 
 -- 查询员工名字、部门名称和所在的城市，并按部门名称降序排序
+select e.first_name, d.department_name, l.city
+from northwind.employees as e
+join northwind.departments as d
+on e.department_id = d.department_id
+join northwind.locations as l
+on d.location_id = l.location_id
+order by d.department_name desc;
+
 -- 查询员工的工资和工资级别
+select salary, grade_level
+from northwind.employees as e
+join northwind.job_grades as jd
+-- on e.salary > jd.lowest_sal and e.salary < jd.highest_sal;
+on e.salary between jd.lowest_sal and jd.highest_sal;
+
 -- 查询员工编号、员工名字、上司编号和名字
+select e.employee_id, e.first_name, m.first_name as manager_name
+from northwind.employees as e
+left join northwind.employees as m
+on e.manager_id = m.employee_id;
+
 -- 查询 90 号部门员工的工种编号和位置编号
+select job_id, location_id
+from northwind.employees as e
+join northwind.departments as d
+on e.department_id = d.department_id
+where d.department_id = 90;
+
 -- 查询有提成的员工，员工名字、部门名称、位置编号和城市
+select e.first_name, d.department_name, l.location_id, l.city
+from northwind.employees as e
+join northwind.departments as d
+on e.department_id = d.department_id
+join northwind.locations as l
+on d.location_id = l.location_id
+where commission_pct is not null;
+
 -- 查询在 toronto 市工作的员工，员工名字、工种编号、部门编号和部门名称
+select e.first_name, e.job_id, d.department_id, d.department_name
+from northwind.employees as e
+join northwind.departments as d
+on e.department_id = d.department_id
+where d.location_id = (
+    select location_id from northwind.locations where city = 'toronto'
+);
+
 -- 查询每个部门的部门名称、工种名称、该工种的最低工资
+select d.department_name, j.job_id, min(e.salary) as min_salary
+from northwind.departments as d
+join northwind.employees as e
+on d.department_id = e.department_id
+join northwind.jobs as j
+on e.job_id = j.job_id
+group by d.department_id, j.job_id;
+
 -- 查询拥有部门数量大于 2 的国家，国家编号和部门数量
+-- city and country are not same
+select l.country_id, count(*) as num
+from northwind.locations as l
+join northwind.departments as d
+on l.location_id = d.location_id
+group by country_id
+having num > 2;
+
+select city, country_id
+from northwind.locations;
+
 -- 查询名为 Lisa 的员工，员工编号、其上司编号和名字
 -- 查询没有部门的城市
 -- 查询任职部门名为 sal 和 it 的员工信息
