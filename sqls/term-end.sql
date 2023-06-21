@@ -68,23 +68,77 @@ revoke all privileges on *.* from 'zhang3'@'localhost';
 
 -- 视图 创建视图 查询：简单查询，复杂查询
 -- 创建数据库 vw，下面操作都在这个数据库中完成
+show databases;
+drop database if exists vm;
+create database if not exists vw;
+use vw;
+select database();
+
 -- 创建 emps 表，拥有 northwind.employees 表的所有数据
+create table if not exists emps as
+select * from northwind.employees;
+
 -- 创建 depts 表，拥有 northwind.departments 表的所有数据
+create table if not exists depts as
+select * from northwind.departments;
+
+drop table if exists vw.depts;
+
 -- 检查两个表中的数据，确保与源表的数据相同
--- 检查 emps 与 northwind.employees 表结构，比较两者的差异
+select * from vw.emps;
+select * from vw.depts;
+
 -- 创建 v_emp1 视图，包含 emps 表中的员工编号、名字和薪水三个字段
+create view v_emp1 as
+select employee_id, first_name, salary
+from vw.emps;
+
 -- 检查 v_emp1 视图的所有数据，确保跟 emps 表中的记录数相同
+select * from vw.v_emp1;
+
 -- 创建 v_emp2 视图，包含 emps 表中月薪大于 8000 的员工，其编号(emp_id)，名字(name)和薪水
+create view v_emp2 as
+select employee_id as emp_id, first_name as name from vw.emps where salary > 8000;
+
 -- 检查 v_emp2 视图中的所有数据
+select * from vw.v_emp2;
+
 -- 创建 v_emp_sal 视图，包含 emps 表中的部门编号和该部门的平均工资(avg_sal)，不包含部门编号为 null 的数据
+create view v_emp_sal as
+select department_id, avg(salary) as avg_sal
+from vw.emps
+where department_id is not null
+group by department_id;
+
 -- 检查 v_emp_sal 视图的所有数据
+select * from vw.v_emp_sal;
+
 -- 创建 v_emp_dept 视图，包含 emps 表中的员工编号和部门编号以及 depts 表中的部门名称
+create view v_emp_dept as
+select employee_id, d.department_id, department_name
+from vw.emps as e
+join vw.depts as d
+on e.department_id = d.department_id;
+
 -- 检查 v_emp_dept 视图的所有数据
+select * from vw.v_emp_dept;
+
 -- 创建 v_emp4 视图，包含 v_emp1 视图中的员工编号和员工名字两个字段
+create view v_emp4 as
+select employee_id, first_name from v_emp1;
+
 -- 检查 v_emp4 视图的所有数据
+select * from vw.v_emp4;
+
 -- 查看 vw_test 数据库中的表对象和视图对象
+show tables from vw;
+
 -- 查看 v_emp1 视图的结构
+desc vw.v_emp1;
+
 -- 查看 v_emp1 视图的状态信息
+show table status from vw like 'v_emp1';
+
 -- 查看 v_emp1 视图的详细定义信息
 -- 修改 v_emp1 视图的数据，将编号为 101 的员工，月薪改为 20000
 -- 检查 v_emp1 视图的数据，确保修改成功
@@ -106,30 +160,86 @@ revoke all privileges on *.* from 'zhang3'@'localhost';
 -- 做下面的准备工作
 -- 创建数据库 tg（下面的操作都在这个数据库完成）
 -- 检查 tg 数据库是否创建成功
+drop database if exists tg;
+create database if not exists tg;
+use tg;
+
 -- 创建表 tb_tg，包括两个字段：id 字段（int、主键、自增）和 note 字段（varchar(20)）
+create table tb_tg(
+    id int primary key auto_increment,
+    note varchar(20)
+);
+
 -- 创建表 tb_tg_log，包括两个字段：id 字段（int、主键、自增）和 log 字段（varchar(40)）
+create table if not exists tb_tg_log(
+    id int primary key auto_increment,
+    `log` varchar(40)
+);
+
 -- 创建表 employees，包括四个字段：employee_id, first_name, salary 和 manager_id，数据来自 northwind.employees
+create table if not exists employees as
+select employee_id, first_name, salary, manager_id
+from northwind.employees;
+
 -- 检查三个表的结构
--- 检查 employees 表的数据，确认有 northwind.employees 表对应的 107 条记录
+desc tb_tg;
+desc tb_tg_log;
+desc employees;
+
 -- 创建名为 after_insert 的触发器，在 tb_tg 表插入数据后，向 tb_tg_log 表中插入日志信息
 -- 日志信息的格式是：[datetime insert]: note，datetime 代表 insert 发生的当前日期和时间，下同
+delimiter $
+create trigger if not exists after_insert
+after insert on tg.tb_tg for each row
+begin
+    insert into tg.tb_tg_log(`log`)
+    values(concat('[', now(), ' insert]: ', new.note));
+end $
+delimiter ;
+
 -- 查看该触发器，确认创建成功
 -- 在 tb_tg 表添加一条日志，内容随意
--- 查看 td_tg 和 td_tg_log 表的数据，确认触发器正常工作
--- .
+-- 查看 tb_tg 和 td_tg_log 表的数据，确认触发器正常工作
+insert into tg.tb_tg(note) VALUES('hello');
+select * from tg.tb_tg;
+select * from tg.tb_tg_log;
+
 -- 创建名为 after_delete 的触发器，在 tb_tg 表删除数据后，向 tb_tg_log 表中插入日志信息
 -- 日志信息的格式是：[datetime delete]: note
 -- 查看该触发器，确认创建成功
 -- 在 tb_tg 表删除一条日志
 -- 查看 td_tg 和 td_tg_log 表的数据，确认触发器正常工作
--- .
+delimiter $
+create trigger if not exists after_delete
+after delete on tg.tb_tg for each row
+begin
+    insert into tg.tb_tg_log(`log`)
+    values(concat('[', now(), ' delete]: ', old.note));
+end $
+delimiter ;
+
+delete from tg.tb_tg;
+
+select * from tg.tb_tg_log;
+
 -- 定义触发器 salary_check，在员工表添加新员工前检查其薪资是否大于他领导的薪资
 -- 如果员工薪资大于其领导薪资，则报 sqlstate 为 45000 的错误
 -- 查看该触发器，确认创建成功
 -- 在员工表表添加一条记录，做通过性测试，检查员工表的数据
 -- 在员工表表添加一条记录，做失效性测试，检查员工表的数据
 -- 确认这个触发器能正常工作
--- .
+delimiter $
+create trigger if not exists salary_check
+before insert on tg.employees for each row
+begin
+    declare manager_sal double(8, 2);
+    select salary into manager_sal from tg.employees where employee_id = new.manager_id;
+    if new.salary > manager_sal then
+        signal sqlstate '45000' set message_text = 'ERROR: 薪资高于领导薪资', mysql_errno = 1001;
+    end if;
+end $
+delimiter ;
+
 -- 分别用三种方式查看上面创建的某个触发器
 -- 删除上面创建的三个触发器
 
