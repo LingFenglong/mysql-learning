@@ -247,27 +247,111 @@ delimiter ;
 
 -- 存储过程、存储函数（结合复合语句分支、循环）
 -- 创建数据库 pf，下面的操作都在这个数据库完成
+drop database if exists pf;
+create database if not exists pf;
+use pf;
+select database();
 -- 创建存储过程 all_data，查询 employees 表的所有数据，调用该存储过程，验证其功能是否正确
--- 下面创建的存储过程或存储函数都需要调用和验证，不再赘述
+delimiter $
+create procedure pf.all_data()
+begin
+    select * from northwind.employees;
+end $
+delimiter ;
+call pf.all_data();
+
 -- 创建存储过程 avg_salary，查询 employees 表所有员工的平均工资
+delimiter $
+create procedure avg_salary()
+begin
+    select avg(salary) as avg_salary
+    from northwind.employees;
+end $
+delimiter ;
+
+call avg_salary();
+
 -- 创建存储过程 max_salary，查询 employees 表的最高工资
+delimiter $
+create procedure max_salary()
+begin
+    select max(salary) as max_salary
+    from northwind.employees;
+end $
+delimiter ;
+
+call pf.max_salary;
+
 -- 创建存储过程 min_salary，查询 employees 表的最低工资，并将最低工资通过参数 minSalary 输出
+drop procedure if exists min_salary;
+delimiter $
+create procedure min_salary(inout minSalary double(8, 2))
+begin
+    select min(salary) into minSalary
+    from northwind.employees;
+end $
+delimiter ;
+declare min_sal;
+set @min_salary := 0;
+call pf.min_salary(@min_salary);
+select @min_salary;
+
 -- 创建存储过程 get_salary_by_id，查询 employees 表某员工的工资，入口参数是 emp_id 员工编号
+delimiter $
+create procedure get_salary_by_id(emp_id int)
+begin
+    select salary from northwind.employees where employee_id = emp_id;
+end $
+delimiter ;
+
+call pf.get_salary_by_id(100);
+
 -- 创建存储过程 get_salary_by_name，查询 employees 表某员工的工资，入口参数是 emp_name 员工名字，出口参数是 salary 该员工的工资
 -- 创建存储过程 get_mgr_name，查询 employees 表中某员工领导的名字，参数 name 同时作为输入的员工名字和输出的领导名字
--- 创建存储函数 avg_salary，返回 employees 表所有员工的平均工资
--- 创建存储函数 get_mgr_name，返回 employees 表中某员工名字的领导的名字
--- 创建存储函数 get_count_by_dept_id，返回 employees 表某部门编号的部门员工人数
--- 查看存储过程 all_data 的代码
--- 查看存储函数 get_count_by_dept_id 的代码
--- 查看存储过程 all_data 的状态
--- 查看存储函数 avg_salary 的状态
--- 查看存储过程 avg_salary 的对象信息
--- 查看存储函数 avg_salary 的对象信息
--- 修改存储过程 avg_salary，添加注释，修改 sql security 为 invoker
--- 删除存储过程 get_mgr_name，验证该对象确实删除
--- 删除存储函数 avg_salary，验证该对象确实删除
 
+
+-- 创建存储函数 avg_salary，返回 employees 表所有员工的平均工资
+show variables like 'log_bin_trust_function_creators';
+set global log_bin_trust_function_creators= on;
+drop function if exists avg_salary;
+delimiter $
+create function avg_salary()
+returns double(8, 2)
+begin
+    return (select avg(salary) from northwind.employees);
+end $
+delimiter ;
+
+select avg_salary();
+
+-- 创建存储函数 get_mgr_name，返回 employees 表中某员工名字的领导的名字
+delimiter $
+create function get_mgr_name(`name` varchar(50))
+returns varchar(50)
+begin
+    return (
+        select first_name from northwind.employees where employee_id = (
+            select manager_id from northwind.employees where first_name = name
+        )
+    );
+end $
+delimiter ;
+
+select * from northwind.employees;
+select get_mgr_name('Lex');
+
+-- 创建存储函数 get_count_by_dept_id，返回 employees 表某部门编号的部门员工人数
+delimiter $
+create function get_count_by_dept_id(id int)
+returns int
+begin
+    return (
+        select count(*) from northwind.employees where department_id = id
+    );
+end $
+delimiter ;
+
+select get_count_by_dept_id(100);
 ----------------------------------------------------------------------------------------------------------
 
 -- DML （增删改）
@@ -510,3 +594,13 @@ from northwind.locations;
 -- 查询工资级别和该级别的员工人数，不包括人数小于 20 的工资级别
 -- 查询所有员工的名字和所属部门的名称
 -- 查询所有部门的名称以及该部门的平均工资 average_salary （不要小数部分），并按平均工资降序排序
+
+----------------------------------------------------------------------------------------------------
+
+create table if not exists tb_test(
+    id int primary key auto_increment,
+    `name` varchar(50),
+    book_id int,
+    foreign key (id) references books (book_id),
+    index idx_name using btree (`name`)
+);
