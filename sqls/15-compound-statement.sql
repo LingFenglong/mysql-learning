@@ -97,7 +97,7 @@ DELIMITER $
 CREATE  PROCEDURE raise_salary3(in emp_id int)
 BEGIN
     DECLARE s double(8, 2);    -- salary
-    DECLARE y DOUBLE(8, 2);    --year
+    DECLARE y DOUBLE(8, 2);    -- year
     DECLARE c DOUBLE(2, 2);    -- commission_pct
 
     SELECT salary, DATEDIFF(NOW(), hire_date) / 365, commission_pct into s, y, c
@@ -209,7 +209,7 @@ begin
             UPDATE cs.employees set salary = s + 100 WHERE employee_id = emp_id;
         WHEN y >= 0 THEN
             UPDATE cs.employees set salary = s + 50 WHERE employee_id = emp_id;
-        END CASE;
+    END CASE;
 end$
 
 DELIMITER ;

@@ -98,7 +98,8 @@ select * from vw.v_emp1;
 
 -- 创建 v_emp2 视图，包含 emps 表中月薪大于 8000 的员工，其编号(emp_id)，名字(name)和薪水
 create view v_emp2 as
-select employee_id as emp_id, first_name as name from vw.emps where salary > 8000;
+select employee_id as emp_id, first_name as `name`
+from vw.emps where salary > 8000;
 
 -- 检查 v_emp2 视图中的所有数据
 select * from vw.v_emp2;
@@ -604,3 +605,181 @@ create table if not exists tb_test(
     foreign key (id) references books (book_id),
     index idx_name using btree (`name`)
 );
+
+-- 创建数据库 cs，下面的操作都在这个数据库完成
+show databases;
+drop database if exists cs;
+create database if not exists cs;
+use cs;
+-- 创建 employees 表，拥有 northwind.employees 表的所有数据
+create table if not exists employees as
+select * from northwind.employees;
+select * from employees;
+select database();
+
+-- raise_salary 1-3 用 if 分支实现
+-- 创建存储过程 raise_salary1，入口参数：员工编号。如果员工薪资低于 8000 元且工龄超过 5 年，涨薪 500 元
+-- ，否则不变。
+-- 确认该存储过程创建成功
+-- 调用该存储过程并传入员工编号 104
+-- 检查 104 编号的员工在调用存储过程前后工资的变化，确认存储过程执行是否成功
+desc employees;
+drop procedure cs.raise_salary1;
+delimiter $
+create procedure cs.raise_salary1(in emp_id int)
+begin
+    declare s double(8, 2);
+    declare y int;
+
+    select salary, datediff(now(), hire_date) / 365 into s, y
+    from cs.employees
+    where employee_id = emp_id;
+
+    if s < 8000 && y > 5 then
+        update employees set salary = salary + 500 where employee_id = emp_id;
+    end if;
+end $
+delimiter ;
+
+select salary from cs.employees where employee_id = 104;
+call cs.raise_salary1(104);
+
+-- 创建存储过程 raise_salary2，入口参数：员工编号。如果员工薪资低于 9000 元且工龄超过 5 年，涨薪 500 元；
+-- 否则涨薪 100 元。
+-- 确认该存储过程创建成功
+-- 调用该存储过程并分别传入员工编号 103 和 104
+-- 检查 103 和 104 编号的员工在调用存储过程前后工资的变化，确认存储过程执行是否成功
+delimiter $
+create procedure cs.raise_salary2(in emp_id int)
+begin
+    declare s double(8, 2);
+    declare y int;
+
+    select salary, datediff(now(), hire_date) / 365 into s, y
+    from cs.employees
+    where employee_id = emp_id;
+
+    if s < 9000 && y > 5 then
+        update employees set salary = salary + 500 where employee_id = emp_id;
+    else
+        update employees set salary = salary + 100 where employee_id = emp_id;
+    end if;
+end $
+delimiter ;
+
+select salary from cs.employees where employee_id = 103;
+select salary from cs.employees where employee_id = 104;
+call cs.raise_salary2(103);
+call cs.raise_salary2(104);
+
+-- 创建存储过程 raise_salary3，入口参数：员工编号。如果员工薪资低于 9000 元且工龄超过 5 年，
+-- 则涨薪到 9000，薪资大于 9000 且低于 10000，并且没有提成的员工，涨薪 500 元；其他涨薪 100 元。
+-- 确认该存储过程创建成功
+-- 调用该存储过程并分别传入员工编号 102、103 和 104
+-- 检查 102、103 和 104 编号的员工在调用存储过程前后工资的变化，确认存储过程执行是否成功
+desc employees;
+drop procedure raise_salary3;
+delimiter $
+create procedure cs.raise_salary3(in emp_id int)
+begin
+    declare s double(8, 2);
+    declare y int;
+    declare c_pct double(2, 2);
+
+    select salary, datediff(now(), hire_date) / 365, commission_pct into s, y, c_pct
+    from cs.employees
+    where employee_id = emp_id;
+
+    if s < 9000 && y > 5 then
+        update employees set salary = 9000 where employee_id = emp_id;
+    elseif s > 9000 && s < 10000 && c_pct = null then
+        update employees set salary = salary + 500 where employee_id = emp_id;
+    else
+        update employees set salary = salary + 100 where employee_id = emp_id;
+    end if;
+end $
+delimiter ;
+
+
+-- raise_salary 4-5 用 case 分支实现
+-- 创建存储过程 raise_salary4，入口参数：员工编号。如果员工薪资低于 9000 元，则涨薪到 9000，薪资大于 9000 且低于 10000，并且没有提成的员工，涨薪 500 元；其他涨薪 100 元。
+-- 确认该存储过程创建成功
+-- 调用该存储过程并分别传入员工编号 101、104 和 105
+-- 检查 101、104 和 105 编号的员工在调用存储过程前后工资的变化，确认存储过程执行是否成功
+
+
+-- 创建存储过程 raise_salary5，入口参数：员工编号。
+-- 如果员工工龄是 0 年，涨薪 50；
+-- 如果工龄是 1 年，涨薪 100；
+-- 如果工龄是 2 年，涨薪 200；
+-- 如果工龄是 3 年，涨薪 300；
+-- 如果工龄是 4 年，涨薪 400；
+-- 其他的涨薪 500。
+-- 确认该存储过程创建成功
+-- 调用该存储过程并分别传入员工编号 101、104 和 105
+-- 检查 101、104 和 105 编号的员工在调用存储过程前后工资的变化，确认存储过程执行是否成功
+drop procedure cs.raise_salary5;
+delimiter $
+create procedure cs.raise_salary5(in emp_id int)
+begin
+    declare y int;
+
+    select datediff(now(), hire_date) / 365 into y
+    from cs.employees
+    where employee_id = emp_id;
+
+    case
+        when y = 0 then
+            update employees set salary = salary + 50 where employee_id = emp_id;
+        when y = 1 then
+            update employees set salary = salary + 100 where employee_id = emp_id;
+        when y = 2 then
+            update employees set salary = salary + 200 where employee_id = emp_id;
+        when y = 3 then
+            update employees set salary = salary + 300 where employee_id = emp_id;
+        when y = 4 then
+            update employees set salary = salary + 400 where employee_id = emp_id;
+        else
+            update employees set salary = salary + 500 where employee_id = emp_id;
+    end case;
+end $
+delimiter ;
+
+select salary, datediff(now(), hire_date) / 365 as years from employees where employee_id = 101;
+call cs.raise_salary5(101);
+
+update employees
+set hire_date = makedate(year(now()) - 3, day(now()))
+where employee_id = 104;
+select salary, datediff(now(), hire_date) / 365 as years from employees where employee_id = 104;
+call raise_salary5(104);
+select salary, datediff(now(), hire_date) / 365 as years from employees where employee_id = 105;
+
+
+-- 下面的功能分别用 loop、while 和 repeat 实现
+-- 创建存储函数 factorial，计算 n!，入口参数 n，返回值 n! = 1 × 2 × ... × n
+-- 确认该存储函数创建成功
+-- 调用该存储函数，确认该存储函数执行是否成功
+-- .
+-- 创建存储过程 pyramid，入口参数 n，输出 n 层法老的金字塔，当 n = 3 时，金字塔如下：
+
+--   *
+--  ***
+-- *****
+-- Copy
+-- 确认该存储过程创建成功
+
+-- 调用该存储过程，确认该存储过程执行是否成功
+
+-- 创建存储过程 mult_talbe，输出九九乘法表
+-- 确认该存储过程创建成功
+-- 调用该存储过程，确认该存储过程执行是否成功
+
+
+-- 声明存储过程 raise_salary6，给全体员工涨薪，每次涨幅为 10%，直到全公司的平均薪资达到 12000 为止，返回上涨次数。
+-- 确认该存储过程创建成功
+-- 调用该存储过程，确认该存储过程执行是否成功
+
+
+-- 创建存储函数 get_count，计算薪资最高员工的工资之和达到 total_salary 的人数
+-- 调用该存储函数，确认该存储函数执行是否成功
