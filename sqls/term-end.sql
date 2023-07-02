@@ -760,9 +760,59 @@ select salary, datediff(now(), hire_date) / 365 as years from employees where em
 -- 创建存储函数 factorial，计算 n!，入口参数 n，返回值 n! = 1 × 2 × ... × n
 -- 确认该存储函数创建成功
 -- 调用该存储函数，确认该存储函数执行是否成功
--- .
--- 创建存储过程 pyramid，入口参数 n，输出 n 层法老的金字塔，当 n = 3 时，金字塔如下：
 
+show variables like 'log_bin_trust_function_creators';
+set global log_bin_trust_function_creators = on;
+
+delimiter $
+create function if not exists factorial(n int) returns int
+begin
+    declare res int default 1;
+    while n > 1 do
+        set res = res * n;
+        set n = n - 1;
+    end while;
+    return (select res);
+end $
+delimiter ;
+
+select database();
+select factorial(5);    // OK
+
+delimiter $
+create function if not exists factorial2(n int) returns int
+begin
+    declare res int default 1;
+    lp: loop
+        set res = res * n;
+        set n = n - 1;
+        if n < 2 then
+            leave lp;
+        end if;
+    end loop lp;
+    return (select res);
+end $
+delimiter ;
+
+select factorial2(5);
+
+
+delimiter $
+create function if not exists factorial3(n int) returns int
+begin
+    declare res int default 1;
+    repeat
+        set res = res * n;
+        set n = n - 1;
+        until n < 2
+    end repeat;
+    return (select res);
+end $
+delimiter ;
+
+select factorial3(5);
+
+-- 创建存储过程 pyramid，入口参数 n，输出 n 层法老的金字塔，当 n = 3 时，金字塔如下：
 --   *
 --  ***
 -- *****
