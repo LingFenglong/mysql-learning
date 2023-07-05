@@ -84,3 +84,19 @@ values ('innnnnnnnnnnnnnnnnnfoooo');
 
 -- 多表查询（连接）多种连接方案，各种连接
 -- from a join b on a.ca ? b.cb
+
+-- case
+--     when expression then todo;
+--     when expression then todo;
+--     else todo;
+-- end case;
+
+-- if expression then todo;
+-- elseif expression then todo;
+-- else todo;
+-- end if;
+
+-- declare i int default 0;
+-- while i < n do
+--     set i = i + 1;
+-- end while;
